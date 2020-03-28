@@ -5,7 +5,7 @@ module.exports = {
     const { page = 1 } = req.query;
 
     const [count] = await connection("incidents").count();
-
+    console.log(count);
     const incidents = await connection("incidents")
       .join("ongs", "ongs.id", "=", "incidents.ong_id")
       .limit(5)
@@ -27,6 +27,17 @@ module.exports = {
   async create(req, res) {
     const { title, description, value } = req.body;
     const ong_id = req.headers.authorization;
+
+    if (!ong_id)
+      return res.status(400).json({ error: "ONG Field is required" });
+
+    const ongExists = await connection("ongs")
+      .where("id", ong_id)
+      .select("*")
+      .first();
+
+    if (!ongExists)
+      return res.status(400).json({ error: "ONG does not exists" });
 
     const [id] = await connection("incidents").insert({
       title,
